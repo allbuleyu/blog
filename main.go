@@ -2,19 +2,40 @@ package main
 
 import (
 	"fmt"
+	"github.com/allbuleyu/blog/framework"
 	"html/template"
 	"log"
 	"net/http"
 )
 
+type MainController struct {
+	framework.Controller
+}
+
+func (c *MainController) Get() {
+	c.Tpl,_ = template.ParseFiles("index.html")
+	c.TplNames = c.Tpl.Name()
+
+	c.Data["Name"] = "hyl"
+	c.Data["Email"] = "hyl.gmail.com"
+
+
+}
+
 func main() {
-	http.HandleFunc("/", hh)
-	err := http.ListenAndServe(":8080", nil)
+	routes := framework.RegistorController{}
+	routes.Add("/", &MainController{})
+	routes.Add("/users/:id([0-9]+)", &MainController{})
+
+	//http.HandleFunc("/", hh)
+	err := http.ListenAndServe(":8080", &routes)
 
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 
 	}
+
+
 
 }
 
