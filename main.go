@@ -13,11 +13,18 @@ type MainController struct {
 }
 
 func (c *MainController) Get() {
+	err := c.Ct.Request.ParseForm()
+	if err != nil {
+		panic(err)
+	}
+
+
 	c.Tpl,_ = template.ParseFiles("index.html")
 	c.TplNames = c.Tpl.Name()
 
 	c.Data["Name"] = "hyl"
 	c.Data["Email"] = "hyl.gmail.com"
+	c.Data["User"] = c.Ct.Params
 
 
 }
@@ -25,7 +32,7 @@ func (c *MainController) Get() {
 func main() {
 	routes := framework.RegistorController{}
 	routes.Add("/", &MainController{})
-	routes.Add("/users/:id([0-9]+)", &MainController{})
+	routes.Add("/users/:id([0-9]+)/:xxx(\\w+)", &MainController{})
 
 	//http.HandleFunc("/", hh)
 	err := http.ListenAndServe(":8080", &routes)

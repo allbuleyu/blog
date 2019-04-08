@@ -6,7 +6,6 @@ package framework
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"reflect"
 	"regexp"
 	"strings"
@@ -93,13 +92,19 @@ func (rc *RegistorController) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			values := r.URL.Query()
 
 			// 路由参数
-			for i, match := range matchs {
+			for i, match := range matchs[1:] {
 				values.Add(route.params[i], match)
 				params[route.params[i]] = match
 			}
 
 			// URL的整体参数是路由参数与普通参数一起
-			r.URL.RawQuery = url.Values(values).Encode() + "&" + r.URL.RawQuery
+
+			if r.URL.RawQuery != "" {
+				r.URL.RawQuery = values.Encode() + "&" + r.URL.RawQuery
+			}else {
+				r.URL.RawQuery = values.Encode()
+			}
+
 		}
 
 		vc := reflect.New(route.controllerType)
