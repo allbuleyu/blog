@@ -71,7 +71,21 @@ func (rc *RegistorController) Add(pattern string, c ControllerInterface) {
 	rc.routers = append(rc.routers, route)
 }
 
+var StaticDir map[string]string = map[string]string{"/public":"/public"}
+
 func (rc *RegistorController) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+
+	var started bool
+	for prefix, staticDir := range StaticDir {
+		if strings.HasPrefix(r.URL.Path, prefix) {
+			file := staticDir + r.URL.Path[len(prefix):]
+			fmt.Println(file, r.URL.Path)
+			http.ServeFile(w, r, file)
+			started = true
+			return
+		}
+	}
 
 	requestPath := r.URL.Path
 
@@ -139,10 +153,15 @@ func (rc *RegistorController) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		// finish
 
 		isFindRouter = true
+		started = true
 		break
 	}
 
 	if isFindRouter == false {
+		http.NotFound(w, r)
+	}
+
+	if started == false {
 		http.NotFound(w, r)
 	}
 }

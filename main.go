@@ -34,6 +34,8 @@ func main() {
 	routes.Add("/", &MainController{})
 	routes.Add("/users/:id([0-9]+)/:xxx(\\w+)", &MainController{})
 
+
+
 	//http.HandleFunc("/", hh)
 	err := http.ListenAndServe(":8080", &routes)
 
