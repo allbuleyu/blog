@@ -19,7 +19,7 @@ type ControllerInterface interface {
 }
 
 type Controller struct {
-	Ct        *Context
+	Ctx        *Context
 	Tpl       *template.Template
 	Data      map[interface{}]interface{}
 	ChildName string
@@ -28,12 +28,12 @@ type Controller struct {
 	TplExt    string
 }
 
-func (c *Controller) Init(ct *Context, cn string) {
+func (c *Controller) Init(ctx *Context, cn string) {
 	c.Data = make(map[interface{}]interface{})
 	c.Layout = make([]string, 0)
 	c.TplNames = ""
 	c.ChildName = cn
-	c.Ct = ct
+	c.Ctx = ctx
 	c.TplExt = "html"
 }
 
@@ -42,7 +42,7 @@ func (c *Controller) Prepare() {
 }
 
 func (c *Controller) Get() {
-	c.Tpl.Execute(c.Ct.ResponseWriter, c.Data)
+	c.Tpl.Execute(c.Ctx.ResponseWriter, c.Data)
 }
 
 func (*Controller) Post() {
@@ -74,7 +74,7 @@ func (*Controller) Finish() {
 }
 
 func (c *Controller) Render() error {
-	c.Tpl.Execute(c.Ct.ResponseWriter, c.Data)
+	c.Tpl.Execute(c.Ctx.ResponseWriter, c.Data)
 
 	return nil
 }

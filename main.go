@@ -13,18 +13,21 @@ type MainController struct {
 }
 
 func (c *MainController) Get() {
-	err := c.Ct.Request.ParseForm()
+	err := c.Ctx.Request.ParseForm()
 	if err != nil {
 		panic(err)
 	}
 
 
-	c.Tpl,_ = template.ParseFiles("index.html")
+	c.Tpl,err = template.ParseFiles("public/index.html")
+	if err != nil {
+		panic(err)
+	}
 	c.TplNames = c.Tpl.Name()
 
 	c.Data["Name"] = "hyl"
 	c.Data["Email"] = "hyl.gmail.com"
-	c.Data["User"] = c.Ct.Params
+	c.Data["User"] = c.Ctx.Params
 
 
 }
@@ -43,8 +46,6 @@ func main() {
 		log.Fatal("ListenAndServe: ", err)
 
 	}
-
-
 
 }
 
