@@ -64,6 +64,60 @@ func (mgr *SessionMgr) StartSession(w http.ResponseWriter, r *http.Request) stri
 	return newSessionID
 }
 
+// 如果session 已存在,则赋值,不存在添加一个
+func (mgr *SessionMgr) SetSessionVal(id string, key, val interface{}) {
+	mgr.mLock.Lock()
+	defer mgr.mLock.Unlock()
+
+	if session, ok := mgr.mSessions[id]; ok {
+		session.mValues = map[interface{}]interface{}{key:val}
+		return
+	}
+
+	session := &Session{
+		mSessionID:id,
+		mLastTimeAccessed:time.Now(),
+		mValues: map[interface{}]interface{}{key:val},
+	}
+
+	mgr.mSessions[id] = session
+}
+
+func (mgr *SessionMgr) GetSessionVal(id string, key interface{}) (interface{}, bool) {
+	mgr.mLock.RLock()
+	defer mgr.mLock.RUnlock()
+
+	if Session, ok := mgr.mSessions[id]; ok {
+		return Session.mValues[key], ok
+	}
+
+	return nil, false
+}
+
+func (mgr *SessionMgr) GetLastAccessTime(id string) time.Time {
+	mgr.mLock.Lock()
+	defer mgr.mLock.Unlock()
+
+	if session, ok := mgr.mSessions[id]; ok {
+		return session.mLastTimeAccessed
+	}
+
+	return time.Now()
+}
+
+func (mgr *SessionMgr) UpdateLastAccessTime(id string) bool {
+	mgr.mLock.Lock()
+	defer mgr.mLock.Unlock()
+
+	if session, ok := mgr.mSessions[id]; ok {
+		session.mLastTimeAccessed = time.Now()
+
+		return true
+	}
+
+	return false
+}
+
 //创建唯一ID
 func NewSessionID() string {
 	b := make([]byte, 32)

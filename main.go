@@ -29,7 +29,7 @@ func (c *MainController) Get() {
 	c.Data["Email"] = "hyl.gmail.com"
 	c.Data["User"] = c.Ctx.Params
 
-	mgr := framework.NewSessionMgr("qqqqq", 10)
+	mgr := framework.NewSessionMgr("GoWebSessionId", 10)
 	mgr.StartSession(c.Ctx.ResponseWriter, c.Ctx.Request)
 
 }
