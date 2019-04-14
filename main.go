@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"github.com/allbuleyu/blog/framework"
+	"github.com/allbuleyu/blog/framework/session"
 	"html/template"
 	"log"
 	"net/http"
@@ -32,12 +34,32 @@ func (c *MainController) Get() {
 	mgr := framework.NewSessionMgr("GoWebSessionId", 10)
 	mgr.StartSession(c.Ctx.ResponseWriter, c.Ctx.Request)
 
+	cookieStore := session.NewCookieStore([]byte("qwwqqq"))
+	sess, err := cookieStore.New(c.Ctx.Request, "hylsdfsdfsdfsd")
+	if err != nil{
+		fmt.Println("create session fail:", err)
+	}
+
+	sess.AddFlash(1, "user_id")
+	sess.AddFlash("hyl", "name")
+	err = sess.Save(c.Ctx.Request, c.Ctx.ResponseWriter)
+	if err != nil{
+		fmt.Println("save session fail:", err)
+	}
+
+	name := sess.Flashes("name")
+	fmt.Println(name)
+}
+
+func init() {
+	gob.Register([]interface{}{})
 }
 
 func main() {
 	routes := framework.RegistorController{}
 	routes.Add("/", &MainController{})
 	routes.Add("/users/:id([0-9]+)/:xxx(\\w+)", &MainController{})
+
 
 
 
