@@ -18,9 +18,8 @@ type Options struct {
 }
 
 var DefaultOptions = &Options{
-	Domain:"",
 	Path:"/",
-	MaxAge:0,
+	MaxAge: 86400 * 30,
 	Secure:false,
 	HttpOnly:false,
 }

@@ -34,8 +34,10 @@ func (c *MainController) Get() {
 	mgr := framework.NewSessionMgr("GoWebSessionId", 10)
 	mgr.StartSession(c.Ctx.ResponseWriter, c.Ctx.Request)
 
-	cookieStore := session.NewCookieStore([]byte("qwwqqq"))
+	cookieStore := session.NewCookieStore([]byte("new-hash-key"), []byte("new-block-key"))
+	cookieStore.Options.MaxAge=60
 	sess, err := cookieStore.New(c.Ctx.Request, "hylsdfsdfsdfsd")
+
 	if err != nil{
 		fmt.Println("create session fail:", err)
 	}
