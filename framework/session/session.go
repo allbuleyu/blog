@@ -25,13 +25,49 @@ func NewSession(store Store, name string) *Session {
 		store:store,
 		IsNew:true,
 		Options:new(Options),
+		Values: map[interface{}]interface{}{},
 	}
 
 	return session
 }
 
+// default session key
+var flashesKey = "_session_key"
+
+func (s *Session ) AddFlash(value interface{}, vars ...string) []interface{} {
+	key := flashesKey
+	if len(vars) > 0 {
+		key = vars[0]
+	}
+	var flashes []interface{}
+	if v, ok := s.Values[key]; ok {
+		flashes = v.([]interface{})
+	}
+	s.Values[key] = append(flashes, value)
+
+	return flashes
+}
+
+func (s *Session) Flashes(vars ...string) []interface{} {
+	var flashes []interface{}
+	key := flashesKey
+	if len(vars) > 0 {
+		key = vars[0]
+	}
+	if v, ok := s.Values[key]; ok {
+		// Drop the flashes and return it.
+		delete(s.Values, key)
+		flashes = v.([]interface{})
+	}
+	return flashes
+}
+
 func (s *Session) Name() string {
 	return s.name
+}
+
+func (s *Session) Save(r *http.Request, w http.ResponseWriter) error {
+	return s.store.Save(r, w, s)
 }
 
 // Registry -------------------------------------------------------------------
@@ -69,7 +105,6 @@ func NewCookie(name, value string, options *Options) *http.Cookie {
 	}else {
 		cookie.Expires = time.Unix(1, 0)
 	}
-
 
 	return cookie
 }

@@ -1,10 +1,14 @@
 package session
 
 import (
+	"encoding/base32"
 	"github.com/gorilla/securecookie"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -75,7 +79,7 @@ func (s *CookieStore) Save(r *http.Request, w http.ResponseWriter, session *Sess
 	 }
 
 	 http.SetCookie(w, NewCookie(session.Name(), encode, session.Options))
-	
+
 	return nil
 }
 
@@ -109,6 +113,9 @@ type FilesystemStore struct {
 var fileMutex sync.RWMutex
 
 func NewFilesystemStore(path string, keyPairs ...[]byte) *FilesystemStore {
+	if path == "" {
+		path = os.TempDir()
+	}
 	fs := &FilesystemStore{
 		Codecs:securecookie.CodecsFromPairs(keyPairs...),
 		Options:&Options{
@@ -151,8 +158,35 @@ func (s *FilesystemStore) New(r *http.Request, name string) (*Session, error) {
 
 
 func (s *FilesystemStore) Save(r *http.Request, w http.ResponseWriter, session *Session) error {
+	var err error
+	if session.Options.MaxAge <= 0 {
+		if err = s.eras(session); err != nil {
+			return err
+		}
 
+		http.SetCookie(w, NewCookie(session.Name(), "", session.Options))
+		return nil
+	}
 
+	if session.ID == "" {
+		// Because the ID is used in the filename, encode it to
+		// use alphanumeric characters only.
+		session.ID = strings.TrimRight(
+			base32.StdEncoding.EncodeToString(
+				securecookie.GenerateRandomKey(32)), "=")
+	}
+
+	if err = s.save(session); err != nil {
+		return err
+	}
+
+	encoded, err := securecookie.EncodeMulti(session.Name(), session.ID,
+		s.Codecs...)
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(w, NewCookie(session.Name(), encoded, session.Options))
 	return nil
 }
 
@@ -192,10 +226,24 @@ func (s *FilesystemStore) load(session *Session) error {
 
 // load reads a file and decodes its content into session.Values.
 func (s *FilesystemStore) save(session *Session) error {
-	return nil
+	encoded, err := securecookie.EncodeMulti(session.Name(), session.Values,
+		s.Codecs...)
+	if err != nil {
+		return err
+	}
+	filename := filepath.Join(s.path, "session_"+session.ID)
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+	return ioutil.WriteFile(filename, []byte(encoded), 0600)
 }
 
 // delete session file
 func (s *FilesystemStore) eras(session *Session) error {
-	return nil
+	filename := path.Join(s.path, session.ID)
+	fileMutex.Lock()
+	defer fileMutex.Unlock()
+
+	err := os.Remove(filename)
+
+	return err
 }
